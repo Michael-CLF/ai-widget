@@ -241,6 +241,7 @@
     `;
     console.log('CSS assigned, length:', style.textContent.length);
     shadow.appendChild(style);
+    console.log('Style element appended to shadow DOM');
 
     // Widget HTML structure
     const widgetHTML = `
