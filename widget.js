@@ -1,6 +1,6 @@
 (() => {
   function initWidget() {
-    // Get configuration from script tag
+    // Store script reference immediately
     const script = document.currentScript || document.querySelector('script[data-widget-id]');
     const widgetId = script?.dataset?.widgetId || script?.getAttribute("data-widget-id");
 
@@ -31,8 +31,7 @@
     const shadow = host.attachShadow({ mode: "open" });
 
     // Widget styles
-    const style = document.createElement("style");
-    style.textContent = `
+    const styles = `
       * { box-sizing: border-box; }
       
       .widget-button {
@@ -238,19 +237,17 @@
         font: 500 16px system-ui;
       }
     `;
-    
-    // Add style to shadow DOM
-    shadow.appendChild(style);
 
-    // Widget HTML structure
+    // Widget HTML structure with embedded styles
     const widgetHTML = `
+      <style>${styles}</style>
       <button class="widget-button" aria-label="${config.name}">
         💬 ${config.name}
       </button>
       <div class="widget-panel">
         <div class="widget-header">
           <span>${config.name}</span>
-          <button class="close-button">×</button>
+          <button class="close-button" aria-label="Close">×</button>
         </div>
         <div class="chat-container">
           <div class="messages"></div>
@@ -262,6 +259,7 @@
       </div>
     `;
 
+    // Set the complete HTML including styles
     shadow.innerHTML = widgetHTML;
 
     // Widget functionality
@@ -437,30 +435,35 @@
       const leadFormHTML = `
         <div class="lead-form">
           <h3>Get personalized assistance</h3>
-          <div class="form-group">
-            <label>Name *</label>
-            <input type="text" id="lead-name" required>
-          </div>
-          <div class="form-group">
-            <label>Email *</label>
-            <input type="email" id="lead-email" required>
-          </div>
-          <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" id="lead-phone">
-          </div>
-          <button class="submit-button" onclick="submitLead()">Get Started</button>
+          <form id="lead-form-element">
+            <div class="form-group">
+              <label>Name *</label>
+              <input type="text" id="lead-name" required>
+            </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" id="lead-email" required>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="lead-phone">
+            </div>
+            <button type="submit" class="submit-button">Get Started</button>
+          </form>
         </div>
       `;
 
       const chatContainer = shadow.querySelector(".chat-container");
       chatContainer.insertAdjacentHTML("beforeend", leadFormHTML);
 
-      // Add submitLead to shadow root context
-      shadow.submitLead = submitLead;
+      // Attach event listener to form
+      const form = shadow.querySelector("#lead-form-element");
+      form.addEventListener("submit", submitLead);
     }
 
-    async function submitLead() {
+    async function submitLead(e) {
+      e.preventDefault();
+      
       const name = shadow.querySelector("#lead-name").value.trim();
       const email = shadow.querySelector("#lead-email").value.trim();
       const phone = shadow.querySelector("#lead-phone").value.trim();
