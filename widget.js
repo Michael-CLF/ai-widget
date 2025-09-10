@@ -32,6 +32,7 @@
 
     // Widget styles
     const style = document.createElement("style");
+    console.log('Style element created:', style);
     style.textContent = `
       * { box-sizing: border-box; }
       
@@ -238,6 +239,7 @@
         font: 500 16px system-ui;
       }
     `;
+    console.log('CSS assigned, length:', style.textContent.length);
     shadow.appendChild(style);
 
     // Widget HTML structure
