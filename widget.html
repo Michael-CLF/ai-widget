@@ -311,7 +311,7 @@
 
     async function getAIResponse(userMessage, context) {
       try {
-        const res = await fetch(config.apiBaseUrl + '/chatRespond', {
+        const res = await fetch(config.apiBaseUrl + config.chatEndpoint, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ widgetId: config.widgetId, message: userMessage, conversationId, sessionId, context })
