@@ -119,13 +119,15 @@
     // Read config from query string
     const params = new URLSearchParams(location.search);
     const config = {
-      widgetId: params.get('widgetId') || '',
-      apiBaseUrl: params.get('apiBaseUrl') || 'https://us-central1-clf-agent.cloudfunctions.net',
-      name: params.get('name') || 'AI Assistant',
-      color: params.get('color') || '#02474d',
-      siteName: params.get('siteName') || document.referrer || 'Unknown Site',
-      verticals: (params.get('verticals') || 'real_estate,mortgage').split(',').map(v => v.trim()).filter(Boolean)
-    };
+    widgetId: params.get('widgetId') || '',
+    apiBaseUrl: params.get('apiBaseUrl') || 'https://us-central1-clf-agent.cloudfunctions.net',
+    name: params.get('name') || 'AI Assistant',
+    color: params.get('color') || '#02474d',
+    siteName: params.get('siteName') || document.referrer || 'Unknown Site',
+    verticals: (params.get('verticals') || 'real_estate,mortgage').split(',').map(v => v.trim()).filter(Boolean),
+    chatEndpoint: params.get('chatEndpoint') || '/claudeChat'
+  };
+
 
     // Apply theming
     const header = document.getElementById('header');
