@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>AI Widget</title>
+  <style>
+    /* Reset scoped to iframe document */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #fff; }
+
+    .root {
+      display: flex; flex-direction: column; height: 100%; width: 100%;
+      background: #fff; border-radius: 16px; overflow: hidden;
+    }
+
+    .widget-header {
+      padding: 12px 14px; color: #fff; display: flex; align-items: center; justify-content: space-between;
+      font-weight: 600; font-size: 15px;
+    }
+    .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .close { background: transparent; border: 0; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
+
+    .messages {
+      flex: 1 1 auto; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #fff;
+    }
+    .message { max-width: 80%; padding: .7rem .9rem; border-radius: 1rem; }
+    .message.user { align-self: flex-end; color: #fff; border-bottom-right-radius: .25rem; }
+    .message.ai { align-self: flex-start; background: #f5f5f5; color: #333; border-bottom-left-radius: .25rem; }
+
+    .typing { align-self: flex-start; background: #f5f5f5; color: #666; border-radius: 1rem; padding: .7rem .9rem; }
+    .typing-dots { display: inline-flex; gap: 2px; }
+    .typing-dots span { width: 4px; height: 4px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: .2s; }
+    .typing-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)} }
+
+    .cta { display: none; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 10px; border-top: 1px solid #eee; background: #fafafa; }
+    .cta.show { display: flex; }
+    .cta .text { font-weight: 500; font-size: 13px; color: #333; }
+    .cta .btn { border: 0; border-radius: 9999px; padding: 8px 10px; color: #fff; font-weight: 500; cursor: pointer; }
+
+    .lead { display: none; padding: 12px; border-top: 1px solid #e5e5e5; background:#f9f9f9; }
+    .lead.open { display: block; }
+    .lead h3 { margin: 0 0 8px 0; font-size: 15px; }
+    .field { margin-bottom: 8px; }
+    .field label { display: block; margin-bottom: 4px; color:#555; font-weight: 500; }
+    .field input { width: 100%; padding: 8px; border:1px solid #ddd; border-radius: 8px; }
+
+    .actions { display:flex; gap:8px; margin-top: 6px; }
+    .submit, .close-form { flex:1; padding:10px; border:0; border-radius:8px; cursor:pointer; font-weight:600; }
+    .submit { color:#fff; }
+    .close-form { background:#e9ecef; color:#333; }
+
+    .input {
+      display:flex; gap:8px; align-items:center; padding: 10px; border-top:1px solid #e5e5e5; background:#fff;
+    }
+    .input input[type="text"] {
+      flex:1; padding: 10px 12px; border:1px solid #ddd; border-radius: 9999px; outline: none;
+      font: 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .send {
+      padding: 10px 14px; color:#fff; border:0; border-radius: 9999px; font-weight:600; cursor:pointer;
+    }
+
+    /* Make scrollbars tidy in iframe */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="root">
+    <div class="widget-header" id="header">
+      <div class="title" id="title">AI Assistant</div>
+      <button class="close" id="close" title="Close">×</button>
+    </div>
+
+    <div class="messages" id="messages" aria-live="polite"></div>
+
+    <div class="cta" id="cta">
+      <div class="text">Want tailored options?</div>
+      <button class="btn" id="openLead">Request more info</button>
+    </div>
+
+    <div class="lead" id="lead">
+      <h3>Get personalized assistance</h3>
+      <form id="leadForm">
+        <div class="field">
+          <label for="leadName">Name *</label>
+          <input id="leadName" required />
+        </div>
+        <div class="field">
+          <label for="leadEmail">Email *</label>
+          <input id="leadEmail" type="email" required />
+        </div>
+        <div class="field">
+          <label for="leadPhone">Phone</label>
+          <input id="leadPhone" type="tel" />
+        </div>
+        <div class="actions">
+          <button type="submit" class="submit" id="submitLead">Get Started</button>
+          <button type="button" class="close-form" id="closeLead">Close form</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="input">
+      <input type="text" id="text" placeholder="Type your message..." maxlength="500" />
+      <button class="send" id="send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Read config from query string
+    const params = new URLSearchParams(location.search);
+    const config = {
+      widgetId: params.get('widgetId') || '',
+      apiBaseUrl: params.get('apiBaseUrl') || 'https://us-central1-clf-agent.cloudfunctions.net',
+      name: params.get('name') || 'AI Assistant',
+      color: params.get('color') || '#02474d',
+      siteName: params.get('siteName') || document.referrer || 'Unknown Site',
+      verticals: (params.get('verticals') || 'real_estate,mortgage').split(',').map(v => v.trim()).filter(Boolean)
+    };
+
+    // Apply theming
+    const header = document.getElementById('header');
+    const title = document.getElementById('title');
+    const sendBtn = document.getElementById('send');
+    const ctaBtn = document.getElementById('openLead');
+    const submitLead = document.getElementById('submitLead');
+
+    header.style.background = config.color;
+    sendBtn.style.background = config.color;
+    ctaBtn.style.background = config.color;
+    submitLead.style.background = config.color;
+    title.textContent = config.name;
+
+    // Elements
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('text');
+    const sendEl = document.getElementById('send');
+    const ctaEl = document.getElementById('cta');
+    const leadEl = document.getElementById('lead');
+    const openLeadEl = document.getElementById('openLead');
+    const closeLeadEl = document.getElementById('closeLead');
+    const leadForm = document.getElementById('leadForm');
+    const closeX = document.getElementById('close');
+
+    // Simple state
+    let conversationId = null;
+    let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
+    let messageCount = 0;
+
+    // Close button just clears the input and hides the lead form (keeps iframe visible)
+    closeX.addEventListener('click', () => { leadEl.classList.remove('open'); inputEl.focus(); });
+
+    // Greeting
+    addMessage('ai', 'Hello! I can answer questions about real estate and mortgages—how can I help?');
+
+    // Events
+    sendEl.addEventListener('click', onSend);
+    inputEl.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        onSend();
+      }
+    });
+    openLeadEl.addEventListener('click', () => toggleLead(true));
+    closeLeadEl.addEventListener('click', () => toggleLead(false));
+    leadForm.addEventListener('submit', onLeadSubmit);
+
+    function addMessage(sender, text) {
+      const el = document.createElement('div');
+      el.className = 'message ' + (sender === 'user' ? 'user' : 'ai');
+      if (sender === 'user') el.style.background = config.color;
+      el.textContent = text;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messageCount++;
+    }
+
+    function showTyping() {
+      const el = document.createElement('div');
+      el.className = 'typing';
+      el.innerHTML = 'AI is typing <span class="typing-dots"><span></span><span></span><span></span></span>';
+      el.id = 'typing';
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    function hideTyping() {
+      const el = document.getElementById('typing');
+      if (el) el.remove();
+    }
+
+    async function onSend() {
+      const msg = inputEl.value.trim();
+      if (!msg) return;
+
+      addMessage('user', msg);
+      inputEl.value = '';
+      sendEl.disabled = true;
+      showTyping();
+
+      try {
+        await saveChatMessage('user', msg);
+
+        const reply = await getAIResponse(msg, {
+          verticals: config.verticals,
+          siteName: config.siteName,
+          pageUrl: document.referrer || ''
+        });
+
+        hideTyping();
+        addMessage('ai', reply);
+        await saveChatMessage('ai', reply);
+
+        if (messageCount >= 3) ctaEl.classList.add('show');
+      } catch (e) {
+        hideTyping();
+        addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+        console.error(e);
+      } finally {
+        sendEl.disabled = false;
+      }
+    }
+
+    function toggleLead(open) {
+      if (open) {
+        leadEl.classList.add('open');
+        ctaEl.classList.remove('show');
+      } else {
+        leadEl.classList.remove('open');
+      }
+    }
+
+    async function onLeadSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('leadName').value.trim();
+      const email = document.getElementById('leadEmail').value.trim();
+      const phone = document.getElementById('leadPhone').value.trim();
+      if (!name || !email) { alert('Please fill in all required fields.'); return; }
+
+      try {
+        const payload = {
+          widgetId: config.widgetId, conversationId, sessionId,
+          leadName: name, leadEmail: email, leadPhone: phone,
+          leadSource: document.referrer || '', capturedAt: new Date().toISOString(),
+          conversation: getHistory(), verticals: config.verticals, siteName: config.siteName
+        };
+
+        const res = await fetch(config.apiBaseUrl + '/leadsCapture', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          leadEl.innerHTML = '<div style="text-align:center; padding:1.2rem;"><h3>Thank you!</h3><p>We\'ll be in touch soon.</p></div>';
+          setTimeout(()=>{ /* leave iframe visible */ }, 1200);
+          track('lead_captured');
+        } else {
+          throw new Error('Lead submit failed');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('There was an error submitting your information. Please try again.');
+      }
+    }
+
+    function getHistory() {
+      const nodes = messagesEl.querySelectorAll('.message');
+      return Array.from(nodes).map(n => ({
+        sender: n.classList.contains('user') ? 'user' : 'ai',
+        message: n.textContent, timestamp: new Date().toISOString()
+      }));
+    }
+
+    async function saveChatMessage(sender, message) {
+      try {
+        const payload = {
+          widgetId: config.widgetId,
+          sessionId,
+          timestamp: new Date().toISOString(),
+          sender,
+          message,
+          metadata: {
+            userAgent: navigator.userAgent,
+            pageUrl: document.referrer || '',
+            pageTitle: config.siteName,
+            verticals: config.verticals,
+            siteName: config.siteName
+          }
+        };
+        const res = await fetch(config.apiBaseUrl + '/chatMessage', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('saveChatMessage failed');
+        const data = await res.json();
+        if (!conversationId && data?.conversationId) conversationId = data.conversationId;
+      } catch (e) {
+        console.error('saveChatMessage error:', e);
+      }
+    }
+
+    async function getAIResponse(userMessage, context) {
+      try {
+        const res = await fetch(config.apiBaseUrl + '/chatRespond', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ widgetId: config.widgetId, message: userMessage, conversationId, sessionId, context })
+        });
+        if (!res.ok) throw new Error('getAIResponse failed');
+        const data = await res.json();
+        return data.message || 'I apologize, but I cannot provide a response right now. Please try again later.';
+      } catch (e) {
+        console.error('getAIResponse error:', e);
+        return 'I apologize, but I cannot provide a response right now. Please try again later.';
+      }
+    }
+
+    async function track(eventType) {
+      try {
+        await fetch(config.apiBaseUrl + '/analyticsTrack', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            widgetId: config.widgetId,
+            eventType,
+            timestamp: new Date().toISOString(),
+            pageUrl: document.referrer || ''
+          })
+        });
+      } catch (e) {
+        console.error('track error:', e);
+      }
+    }
+
+    // First load event
+    track('widget_loaded');
+  </script>
+</body>
+</html>
