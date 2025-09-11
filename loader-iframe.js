@@ -30,7 +30,8 @@
     name: cfg.name,
     color: cfg.color,
     siteName: cfg.siteName,
-    verticals: cfg.verticals
+    verticals: cfg.verticals,
+    chatEndpoint: script.getAttribute('data-chat-endpoint') || '/claudeChat'    
   }).toString();
 
   const iframe = document.createElement('iframe');
