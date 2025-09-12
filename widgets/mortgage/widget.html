@@ -158,13 +158,14 @@
     let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
     let messageCount = 0;
 
-    const closeBtn = document.querySelector('.close-button');
+   const closeBtn = document.getElementById('close'); // you already have id="close"
 if (closeBtn) {
   closeBtn.addEventListener('click', () => {
-    // tell the loader to close/minimize the iframe
+    console.log('[widget] close clicked');               // <-- should appear in the *iframe* console
     window.parent.postMessage({ source: 'ai-widget', type: 'CLOSE' }, '*');
   });
 }
+
 
     
 
