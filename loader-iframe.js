@@ -116,10 +116,13 @@ const widgetPath =
     }
   });
 
-  // Optional: close on Escape when focus is outside iframe
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && iframe.style.display !== 'none') closeWidget();
-  });
+window.addEventListener('message', (e) => {
+  console.log('[loader] message', e.origin, e.data);      // <-- should appear in the *page* console
+  if (e?.data?.source === 'ai-widget' && e.data.type === 'CLOSE') {
+    closeWidget();
+  }
+});
+
 
   // ---- Append to DOM (start closed) -----------------------------------------
   const append = () => {
