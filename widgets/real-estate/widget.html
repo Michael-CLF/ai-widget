@@ -23,7 +23,23 @@
       font-weight: 600; font-size: 15px;
     }
     .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .close-button { background: transparent; border: 0; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
+    .close-button {
+  all: unset;              /* remove UA styles */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  color: #fff;
+  padding: 0 6px;
+}
+
+.close-button:focus-visible {
+  outline: 2px solid #fff; /* restore an accessible focus ring */
+  outline-offset: 2px;
+}
+
 
     .messages {
       flex: 1 1 auto; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #fff;
