@@ -77,7 +77,7 @@
   <div class="root">
     <div class="widget-header" id="header">
       <div class="title" id="title">Mortgage AI Assistant</div>
-      <button class="close" id="close" title="Close">×</button>
+      <button class="close-button" id="close" title="Close">×</button>
     </div>
 
     <div class="messages" id="messages" aria-live="polite"></div>
@@ -158,8 +158,15 @@
     let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
     let messageCount = 0;
 
-    // Close button just clears the input and hides the lead form (keeps iframe visible)
-    closeX.addEventListener('click', () => { leadEl.classList.remove('open'); inputEl.focus(); });
+    const closeBtn = document.querySelector('.close-button');
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    // tell the loader to close/minimize the iframe
+    window.parent.postMessage({ source: 'ai-widget', type: 'CLOSE' }, '*');
+  });
+}
+
+    
 
     // Greeting
     addMessage('ai', 'Hello! I can answer questions about real estate and mortgages—how can I help?');
