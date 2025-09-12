@@ -22,7 +22,7 @@
     verticals: script.getAttribute('data-verticals') || 'real_estate,mortgage',
     chatEndpoint: script.getAttribute('data-chat-endpoint') || '/claudeChat',
     // Optional: choose a specific vertical folder (widgets/<vertical>/widget.html)
-    vertical: (script.getAttribute('data-vertical') || '').trim().toLowerCase(),
+    vertical: (script.getAttribute('data-vertical') || 'mortgage').trim().toLowerCase(),
     width: parseInt(script.getAttribute('data-width') || '380', 10),
     height: parseInt(script.getAttribute('data-height') || '560', 10),
   };
@@ -44,11 +44,9 @@
   }).toString();
 
   // Default to root widget.html; if data-vertical is present, use folder variant
-  const widgetPath = cfg.vertical
-    ? `https://michael-clf.github.io/ai-widget/widgets/${encodeURIComponent(
-        cfg.vertical
-      )}/widget.html?${qs}`
-    : `https://michael-clf.github.io/ai-widget/widget.html?${qs}`;
+  // Build iframe path from the selected vertical (no root fallback)
+const widgetPath =
+  `https://michael-clf.github.io/ai-widget/widgets/${encodeURIComponent(cfg.vertical)}/widget.html?${qs}`;
 
   // ---- Elements --------------------------------------------------------------
   const iframe = document.createElement('iframe');
