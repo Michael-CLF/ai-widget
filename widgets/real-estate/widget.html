@@ -23,7 +23,7 @@
       font-weight: 600; font-size: 15px;
     }
     .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .close { background: transparent; border: 0; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
+    .close-button { background: transparent; border: 0; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
 
     .messages {
       flex: 1 1 auto; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #fff;
@@ -158,8 +158,14 @@
     let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
     let messageCount = 0;
 
-    // Close button just clears the input and hides the lead form (keeps iframe visible)
-    closeX.addEventListener('click', () => { leadEl.classList.remove('open'); inputEl.focus(); });
+  const closeBtn = document.getElementById('close'); // you already have id="close"
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    console.log('[widget] close clicked');               // <-- should appear in the *iframe* console
+    window.parent.postMessage({ source: 'ai-widget', type: 'CLOSE' }, '*');
+  });
+}
+
 
     // Greeting
     addMessage('ai', 'Hello! I can answer questions about real estate and mortgages—how can I help?');
